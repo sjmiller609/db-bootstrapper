@@ -50,9 +50,7 @@ def create_kube_client(in_cluster):
 
 
 def create_conn_secret(kube, secret_name, connection):
-    """
-    Create the Kubernetes secret for PostgreSQL.
-    """
+    """Create the Kubernetes secret for PostgreSQL."""
     metadata = client.V1ObjectMeta(name=secret_name,
                                    labels={'component': secret_name})
 
@@ -71,9 +69,7 @@ def create_conn_secret(kube, secret_name, connection):
 
 
 def patch_conn_secret(kube, secret_name, connection):
-    """
-    Patch the existing Kubernetes secret for PostgreSQL.
-    """
+    """Patch the existing Kubernetes secret for PostgreSQL."""
     metadata = client.V1ObjectMeta(labels={'component': secret_name})
 
     body = client.V1Secret(
