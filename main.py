@@ -71,6 +71,9 @@ def create_conn_secret(kube, secret_name, connection):
 
 
 def patch_conn_secret(kube, secret_name, connection):
+    """
+    Patch the existing Kubernetes secret for PostgreSQL.
+    """
     metadata = client.V1ObjectMeta(labels={'component': secret_name})
 
     body = client.V1Secret(
@@ -88,7 +91,7 @@ def patch_conn_secret(kube, secret_name, connection):
 
 
 def ensure_conn_secret(kube, secret_name, conn):
-    """Create the Kubernetes secret for PostgreSQL if it doesn't exist."""
+    """Create/update Kubernetes secret for PostgreSQL."""
     # Search for Secret
     kwargs = dict(label_selector=f'component={secret_name}', limit=1)
 
