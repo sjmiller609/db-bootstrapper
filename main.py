@@ -34,7 +34,7 @@ def ensure_db(conn):
         click.echo("Successfully created database")
 
 
-def create_kube_client(in_cluster=False):
+def create_kube_client(in_cluster):
     """
     Load and store authentication and cluster information from kube-config
     file; if running inside a pod, use Kubernetes service account. Use that to
@@ -91,7 +91,7 @@ def ensure_conn_secret(kube, secret_name, conn):
 @click.option('--bootstrap-db', envvar='BOOTSTRAP_DB')
 @click.option('--db-name', envvar='DB_NAME')
 @click.option('--secret-name', envvar='SECRET_NAME')
-@click.option('--in-cluster', envvar='IN_CLUSTER')
+@click.option('--in-cluster', envvar='IN_CLUSTER', type=bool, default=False)
 def main(bootstrap_db, db_name, secret_name, in_cluster):
     """Entrypoint."""
     if not (bootstrap_db and db_name and secret_name):
