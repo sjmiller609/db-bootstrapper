@@ -41,17 +41,18 @@ def create_kube_client(in_cluster):
     instantiate Kubernetes client.
     """
     if in_cluster:
+        print("loading incluster")
         config.load_incluster_config()
     else:
+        print("loading outside cluster")
         config.load_kube_config()
     return client.CoreV1Api()
 
 
-def create_conn_secret(secret_name, connection):
+def create_conn_secret(kube, secret_name, connection):
     """
     Create the Kubernetes secret for PostgreSQL.
     """
-    kube = create_kube_client()
     metadata = client.V1ObjectMeta(name=secret_name,
                                    labels={'component': secret_name})
 
@@ -69,6 +70,23 @@ def create_conn_secret(secret_name, connection):
         click.echo("Error creating secret")
 
 
+def patch_conn_secret(kube, secret_name, connection):
+    metadata = client.V1ObjectMeta(labels={'component': secret_name})
+
+    body = client.V1Secret(
+        api_version="v1",
+        kind="Secret",
+        metadata=metadata,
+        string_data={'connection': connection})
+
+    try:
+        kube.patch_namespaced_secret(secret_name, 'default', body)
+        click.echo("Successfully patched secret")
+    except Exception as e:
+        print(e)
+        click.echo("Error patching secret")
+
+
 def ensure_conn_secret(kube, secret_name, conn):
     """Create the Kubernetes secret for PostgreSQL if it doesn't exist."""
     # Search for Secret
@@ -78,9 +96,10 @@ def ensure_conn_secret(kube, secret_name, conn):
         secrets = kube.list_namespaced_secret('default', **kwargs)
         if len(secrets.items) != 1:
             click.echo("Secret does not exist, creating...")
-            create_conn_secret(secret_name, str(conn))
+            create_conn_secret(kube, secret_name, str(conn))
         else:
-            click.echo("Secret exists, skipping...")
+            click.echo("Secret exists, patching...")
+            patch_conn_secret(kube, secret_name, str(conn))
 
     except Exception as e:
         click.echo(e)
@@ -98,7 +117,7 @@ def main(bootstrap_db, db_name, secret_name, in_cluster):
         sys.exit(1)
 
     db_client = create_db_client(bootstrap_db)
-    kube_client = create_kube_client(in_cluster)
+    kube_client = create_kube_client(bool(in_cluster))
     conn = get_new_db(db_client, db_name)
 
     ensure_conn_secret(kube_client, secret_name, conn)
