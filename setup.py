@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 setup(
     name='db_bootstrapper',
     version='0.0.1',
-    packages=find_packages(),
+    # packages=find_packages(),
     # include_package_data=True,
-    # py_modules=['db_bootstrapper'],
+    py_modules=['db_bootstrapper'],
     install_requires=[
         'click==6.7',
         'psycopg2==2.7.5',
