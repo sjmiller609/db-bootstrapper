@@ -5,7 +5,7 @@ setup(
     version='0.0.1',
     # packages=find_packages(),
     # include_package_data=True,
-    py_modules=['db_bootstrapper'],
+    py_modules=['main'],
     install_requires=[
         'click==6.7',
         'psycopg2==2.7.5',
