@@ -88,13 +88,12 @@ def ensure_conn_secret(kube, secret_name, conn):
 
 
 @click.command()
-def main():
+@click.option('--bootstrap-db', envvar='BOOTSTRAP_DB')
+@click.option('--db-name', envvar='DB_NAME')
+@click.option('--secret-name', envvar='SECRET_NAME')
+@click.option('--in-cluster', envvar='IN_CLUSTER')
+def main(bootstrap_db, db_name, secret_name, in_cluster):
     """Entrypoint."""
-    bootstrap_db = os.getenv('BOOTSTRAP_DB')
-    db_name = os.getenv('DB_NAME')
-    secret_name = os.getenv('SECRET_NAME')
-    in_cluster = os.getenv('IN_CLUSTER')
-
     if not (bootstrap_db and db_name and secret_name):
         click.echo("Environment not set correctly")
         sys.exit(1)
