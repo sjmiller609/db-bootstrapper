@@ -117,7 +117,7 @@ def main(bootstrap_db, db_name, secret_name, in_cluster):
         sys.exit(1)
 
     db_client = create_db_client(bootstrap_db)
-    kube_client = create_kube_client(bool(in_cluster))
+    kube_client = create_kube_client(in_cluster)
     conn = get_new_db(db_client, db_name)
 
     ensure_conn_secret(kube_client, secret_name, conn)
