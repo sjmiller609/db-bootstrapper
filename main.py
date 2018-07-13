@@ -27,6 +27,7 @@ def ensure_db(conn):
 
 def create_kube_client(in_cluster=False):
     if in_cluster:
+        print("loading incluster")
         config.load_incluster_config()
     else:
         config.load_kube_config()
@@ -100,7 +101,7 @@ def main():
         exit(1)
 
     db_client = create_db_client(bootstrap_db)
-    kube_client = create_kube_client(in_cluster)
+    kube_client = create_kube_client(bool(in_cluster))
     conn = get_new_db(db_client, db_name)
 
     ensure_conn_secret(kube_client, secret_name, conn)
