@@ -1,2 +1,3 @@
 # db-bootstrapper
-Utility to initialize databases and create kubrenetes secrets
+
+Utility to initialize databases and create Kubernetes secrets
