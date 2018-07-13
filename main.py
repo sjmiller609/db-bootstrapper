@@ -9,10 +9,12 @@ from sqlalchemy_utils import database_exists, create_database
 def create_db_client(conn):
     return create_engine(conn, isolation_level='AUTOCOMMIT')
 
+
 def get_new_db(engine, db_name):
     conn = engine.url
     conn.database = db_name
     return conn
+
 
 def ensure_db(conn):
     if database_exists(conn):
@@ -22,12 +24,14 @@ def ensure_db(conn):
         create_database(conn)
         click.echo("Successfully created database")
 
+
 def create_kube_client(in_cluster=False):
     if in_cluster:
         config.load_incluster_config()
     else:
         config.load_kube_config()
     return client.CoreV1Api()
+
 
 def create_conn_secret(secret_name, connection):
     kube = create_kube_client()
@@ -48,6 +52,24 @@ def create_conn_secret(secret_name, connection):
         click.echo("Error creating secret")
 
 
+def patch_conn_secret(secret_name, connection):
+    kube = create_kube_client()
+    metadata = client.V1ObjectMeta(labels={'component': secret_name})
+
+    body = client.V1Secret(
+        api_version="v1",
+        kind="Secret",
+        metadata=metadata,
+        string_data={'connection': connection})
+
+    try:
+        kube.patch_namespaced_secret(secret_name, 'default', body)
+        click.echo("Successfully patched secret")
+    except Exception as e:
+        print(e)
+        click.echo("Error patching secret")
+
+
 def ensure_conn_secret(kube, secret_name, conn):
     # Search for Secret
     dict_string = 'component={}'.format(secret_name)
@@ -59,7 +81,8 @@ def ensure_conn_secret(kube, secret_name, conn):
             click.echo("Secret does not exist, creating...")
             create_conn_secret(secret_name, str(conn))
         else:
-            click.echo("Secret exists, skipping...")
+            click.echo("Secret exists, patching...")
+            patch_conn_secret(secret_name, str(conn))
 
     except Exception as e:
         click.echo(e)
