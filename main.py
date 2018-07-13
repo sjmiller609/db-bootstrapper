@@ -35,8 +35,7 @@ def create_kube_client(in_cluster=False):
     return client.CoreV1Api()
 
 
-def create_conn_secret(secret_name, connection):
-    kube = create_kube_client()
+def create_conn_secret(kube, secret_name, connection):
     metadata = client.V1ObjectMeta(name=secret_name,
                                    labels={'component': secret_name})
 
@@ -54,8 +53,7 @@ def create_conn_secret(secret_name, connection):
         click.echo("Error creating secret")
 
 
-def patch_conn_secret(secret_name, connection):
-    kube = create_kube_client()
+def patch_conn_secret(kube, secret_name, connection):
     metadata = client.V1ObjectMeta(labels={'component': secret_name})
 
     body = client.V1Secret(
@@ -81,10 +79,10 @@ def ensure_conn_secret(kube, secret_name, conn):
         secrets = kube.list_namespaced_secret('default', **kwargs)
         if len(secrets.items) != 1:
             click.echo("Secret does not exist, creating...")
-            create_conn_secret(secret_name, str(conn))
+            create_conn_secret(kube, secret_name, str(conn))
         else:
             click.echo("Secret exists, patching...")
-            patch_conn_secret(secret_name, str(conn))
+            patch_conn_secret(kube, secret_name, str(conn))
 
     except Exception as e:
         click.echo(e)
