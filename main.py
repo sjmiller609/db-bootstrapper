@@ -30,6 +30,7 @@ def create_kube_client(in_cluster=False):
         print("loading incluster")
         config.load_incluster_config()
     else:
+        print("loading outside cluster")
         config.load_kube_config()
     return client.CoreV1Api()
 
