@@ -1,4 +1,5 @@
 import os
+import sys
 import click
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -74,7 +75,7 @@ def main():
 
     if not (bootstrap_db and db_name and secret_name):
         click.echo("Environment not set correctly")
-        exit(1)
+        sys.exit(1)
 
     db_client = create_db_client(bootstrap_db)
     kube_client = create_kube_client(in_cluster)
