@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='db_bootstrapper',
     version='0.0.1',
-    py_modules=['main'],
+    packages=find_packages(),
     install_requires=[
         'click==6.7',
         'psycopg2==2.7.5',
