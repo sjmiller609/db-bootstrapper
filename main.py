@@ -72,8 +72,7 @@ def create_conn_secret(secret_name, connection):
 def ensure_conn_secret(kube, secret_name, conn):
     """Create the Kubernetes secret for PostgreSQL if it doesn't exist."""
     # Search for Secret
-    dict_string = 'component={}'.format(secret_name)
-    kwargs = dict(label_selector=dict_string, limit=1)
+    kwargs = dict(label_selector=f'component={secret_name}', limit=1)
 
     try:
         secrets = kube.list_namespaced_secret('default', **kwargs)
