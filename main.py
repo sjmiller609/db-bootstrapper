@@ -1,3 +1,7 @@
+"""
+Bootstrap database and Kubernetes secrets for Astronomer EE install.
+"""
+
 import os
 import sys
 
@@ -9,16 +13,19 @@ from sqlalchemy_utils import create_database, database_exists
 
 
 def create_db_client(conn):
+    """Create SQLAlchemy engine for PostgreSQL connection."""
     return create_engine(conn, isolation_level='AUTOCOMMIT')
 
 
 def get_new_db(engine, db_name):
+    """Add database name to SQLAlchemy engine."""
     conn = engine.url
     conn.database = db_name
     return conn
 
 
 def ensure_db(conn):
+    """Create the PostgreSQL database if it does not exist."""
     if database_exists(conn):
         click.echo("Database exists, skipping...")
     else:
@@ -28,6 +35,11 @@ def ensure_db(conn):
 
 
 def create_kube_client(in_cluster=False):
+    """
+    Load and store authentication and cluster information from kube-config
+    file; if running inside a pod, use Kubernetes service account. Use that to
+    instantiate Kubernetes client.
+    """
     if in_cluster:
         config.load_incluster_config()
     else:
@@ -36,6 +48,9 @@ def create_kube_client(in_cluster=False):
 
 
 def create_conn_secret(secret_name, connection):
+    """
+    Create the Kubernetes secret for PostgreSQL.
+    """
     kube = create_kube_client()
     metadata = client.V1ObjectMeta(name=secret_name,
                                    labels={'component': secret_name})
@@ -55,6 +70,7 @@ def create_conn_secret(secret_name, connection):
 
 
 def ensure_conn_secret(kube, secret_name, conn):
+    """Create the Kubernetes secret for PostgreSQL if it doesn't exist."""
     # Search for Secret
     dict_string = 'component={}'.format(secret_name)
     kwargs = dict(label_selector=dict_string, limit=1)
@@ -73,6 +89,7 @@ def ensure_conn_secret(kube, secret_name, conn):
 
 @click.command()
 def main():
+    """Entrypoint."""
     bootstrap_db = os.getenv('BOOTSTRAP_DB')
     db_name = os.getenv('DB_NAME')
     secret_name = os.getenv('SECRET_NAME')
