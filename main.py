@@ -1,19 +1,22 @@
 import os
 import sys
+
 import click
 import sqlalchemy
-from sqlalchemy import create_engine
 from kubernetes import client, config
-from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database, database_exists
 
 
 def create_db_client(conn):
     return create_engine(conn, isolation_level='AUTOCOMMIT')
 
+
 def get_new_db(engine, db_name):
     conn = engine.url
     conn.database = db_name
     return conn
+
 
 def ensure_db(conn):
     if database_exists(conn):
@@ -23,12 +26,14 @@ def ensure_db(conn):
         create_database(conn)
         click.echo("Successfully created database")
 
+
 def create_kube_client(in_cluster=False):
     if in_cluster:
         config.load_incluster_config()
     else:
         config.load_kube_config()
     return client.CoreV1Api()
+
 
 def create_conn_secret(secret_name, connection):
     kube = create_kube_client()
