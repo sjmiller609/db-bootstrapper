@@ -41,15 +41,15 @@ def create_kube_client(in_cluster):
     instantiate Kubernetes client.
     """
     if in_cluster:
-        print("loading incluster")
+        click.echo("Using in cluster kubernetes configuration")
         config.load_incluster_config()
     else:
-        print("loading outside cluster")
+        click.echo("Using kubectl kubernetes configuration")
         config.load_kube_config()
     return client.CoreV1Api()
 
 
-def create_conn_secret(kube, secret_name, connection):
+def create_conn_secret(kube, namespace, secret_name, connection):
     """Create the Kubernetes secret for PostgreSQL."""
     metadata = client.V1ObjectMeta(name=secret_name,
                                    labels={'component': secret_name})
@@ -61,14 +61,14 @@ def create_conn_secret(kube, secret_name, connection):
         string_data={'connection': connection})
 
     try:
-        kube.create_namespaced_secret('default', body)
+        kube.create_namespaced_secret(namespace, body)
         click.echo("Successfully created secret")
     except Exception as e:
         print(e)
         click.echo("Error creating secret")
 
 
-def patch_conn_secret(kube, secret_name, connection):
+def patch_conn_secret(kube, namespace, secret_name, connection):
     """Patch the existing Kubernetes secret for PostgreSQL."""
     metadata = client.V1ObjectMeta(labels={'component': secret_name})
 
@@ -79,47 +79,44 @@ def patch_conn_secret(kube, secret_name, connection):
         string_data={'connection': connection})
 
     try:
-        kube.patch_namespaced_secret(secret_name, 'default', body)
+        kube.patch_namespaced_secret(secret_name, namespace, body)
         click.echo("Successfully patched secret")
     except Exception as e:
         print(e)
         click.echo("Error patching secret")
 
 
-def ensure_conn_secret(kube, secret_name, conn):
+def ensure_conn_secret(kube, namespace, secret_name, conn):
     """Create/update Kubernetes secret for PostgreSQL."""
     # Search for Secret
     kwargs = dict(label_selector=f'component={secret_name}', limit=1)
 
     try:
-        secrets = kube.list_namespaced_secret('default', **kwargs)
+        secrets = kube.list_namespaced_secret(namespace, **kwargs)
         if len(secrets.items) != 1:
             click.echo("Secret does not exist, creating...")
-            create_conn_secret(kube, secret_name, str(conn))
+            create_conn_secret(kube, namespace, secret_name, str(conn))
         else:
             click.echo("Secret exists, patching...")
-            patch_conn_secret(kube, secret_name, str(conn))
+            patch_conn_secret(kube, namespace, secret_name, str(conn))
 
     except Exception as e:
         click.echo(e)
 
 
 @click.command()
-@click.option('--bootstrap-db', envvar='BOOTSTRAP_DB')
-@click.option('--db-name', envvar='DB_NAME')
-@click.option('--secret-name', envvar='SECRET_NAME')
+@click.option('--bootstrap-db', envvar='BOOTSTRAP_DB', required=True)
+@click.option('--db-name', envvar='DB_NAME', required=True)
+@click.option('--secret-name', envvar='SECRET_NAME', required=True)
+@click.option('--namespace', envvar='NAMESPACE', required=True)
 @click.option('--in-cluster', envvar='IN_CLUSTER', type=bool, default=False)
-def main(bootstrap_db, db_name, secret_name, in_cluster):
+def main(bootstrap_db, db_name, secret_name, namespace, in_cluster):
     """Entrypoint."""
-    if not (bootstrap_db and db_name and secret_name):
-        click.echo("Environment not set correctly")
-        sys.exit(1)
-
     db_client = create_db_client(bootstrap_db)
     kube_client = create_kube_client(in_cluster)
     conn = get_new_db(db_client, db_name)
 
-    ensure_conn_secret(kube_client, secret_name, conn)
+    ensure_conn_secret(kube_client, namespace, secret_name, conn)
     ensure_db(conn)
 
 
