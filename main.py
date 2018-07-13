@@ -22,8 +22,11 @@ def ensure_db(conn):
         create_database(conn)
         click.echo("Successfully created database")
 
-def create_kube_client():
-    config.load_kube_config()
+def create_kube_client(in_cluster=False):
+    if in_cluster:
+        config.load_incluster_config()
+    else:
+        config.load_kube_config()
     return client.CoreV1Api()
 
 def create_conn_secret(secret_name, connection):
@@ -67,13 +70,14 @@ def main():
     bootstrap_db = os.getenv('BOOTSTRAP_DB')
     db_name = os.getenv('DB_NAME')
     secret_name = os.getenv('SECRET_NAME')
+    in_cluster = os.getenv('IN_CLUSTER')
 
     if not (bootstrap_db and db_name and secret_name):
         click.echo("Environment not set correctly")
         exit(1)
 
     db_client = create_db_client(bootstrap_db)
-    kube_client = create_kube_client()
+    kube_client = create_kube_client(in_cluster)
     conn = get_new_db(db_client, db_name)
 
     ensure_conn_secret(kube_client, secret_name, conn)
