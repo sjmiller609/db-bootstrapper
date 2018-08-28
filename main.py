@@ -25,13 +25,29 @@ def get_new_db(engine, db_name):
 
 
 def ensure_db(conn):
-    """Create the PostgreSQL database if it does not exist."""
+    """
+    Create the PostgreSQL database if it does not exist.
+    Attempt to convert db names with dashes to underscores, unless they exist already
+    """
+    db_name = conn.database
+
+    # if db_name passed in already exists, always use it
     if database_exists(conn):
         click.echo("Database exists, skipping...")
-    else:
-        click.echo("Database does not exist, creating...")
-        create_database(conn)
-        click.echo("Successfully created database")
+        return conn
+
+    # convert any `-` to `_`, and recheck if it exists
+    conn.database = db_name.replace('-', '_')
+    if database_exists(conn):
+        click.echo("Database exists, skipping...")
+        return conn
+
+    # database didn't exist with `-` or `_`, so create it with `_`
+    click.echo("Database does not exist, creating...")
+    create_database(conn)
+    click.echo("Successfully created database")
+
+    return conn
 
 
 def create_kube_client(in_cluster):
@@ -114,10 +130,14 @@ def main(bootstrap_db, db_name, secret_name, namespace, in_cluster):
     """Entrypoint."""
     db_client = create_db_client(bootstrap_db)
     kube_client = create_kube_client(in_cluster)
-    conn = get_new_db(db_client, db_name)
 
+    # ensure the database exists
+    conn = get_new_db(db_client, db_name)
+    conn = ensure_db(conn)
+
+    # ensure the k8 secret exists for the conn
     ensure_conn_secret(kube_client, namespace, secret_name, conn)
-    ensure_db(conn)
+
 
 
 if __name__ == '__main__':
