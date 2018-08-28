@@ -29,7 +29,6 @@ def ensure_db(conn):
     Create the PostgreSQL database if it does not exist.
     Attempt to convert db names with dashes to underscores, unless they exist already
     """
-    db_name = conn.database
 
     # if db_name passed in already exists, always use it
     if database_exists(conn):
@@ -37,7 +36,7 @@ def ensure_db(conn):
         return conn
 
     # convert any `-` to `_`, and recheck if it exists
-    conn.database = db_name.replace('-', '_')
+    conn.database = conn.database.replace('-', '_')
     if database_exists(conn):
         click.echo("Database exists, skipping...")
         return conn
