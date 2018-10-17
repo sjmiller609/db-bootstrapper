@@ -10,6 +10,7 @@ setup(
         'SQLAlchemy==1.2.9',
         'sqlalchemy-utils==0.33.0',
         'kubernetes==7.0.0',
+        'urllib3==1.23',
     ],
     entry_points={
         'console_scripts': [
