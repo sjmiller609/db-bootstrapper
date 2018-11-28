@@ -8,3 +8,10 @@ pipeline:
       - astronomer/astronomer
     when:
       branch: master
+ 
+  notify:
+    image: plugins/slack
+    secrets: [ slack_webhook ]
+    channel: engineering
+    when:
+      status: [ failure ]
