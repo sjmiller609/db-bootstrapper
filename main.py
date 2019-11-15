@@ -4,7 +4,6 @@ Bootstrap database and Kubernetes secrets for Astronomer EE install.
 
 import os
 import sys
-
 import click
 import sqlalchemy
 from kubernetes import client, config
